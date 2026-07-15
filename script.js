@@ -1,11 +1,69 @@
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
 
+const wordList = [
+  "apple",
+  "bread",
+  "chair",
+  "cloud",
+  "dance",
+  "earth",
+  "flame",
+  "glass",
+  "house",
+  "light",
+  "music",
+  "night",
+  "ocean",
+  "plant",
+  "quiet",
+  "river",
+  "stone",
+  "table",
+  "water",
+  "young"
+];
+
+const words = [];
+
 let lastTime = 0;
 let elapsedTime = 0;
+let spawnTimer = 0;
+
+const spawnDelay = 1500;
+const wordFont = '20px "Courier New", monospace';
+
+function getRandomWord() {
+  const index = Math.floor(Math.random() * wordList.length);
+  return wordList[index];
+}
+
+function spawnWord() {
+  const text = getRandomWord();
+
+  ctx.font = wordFont;
+  const width = ctx.measureText(text).width;
+
+  const padding = 20;
+  const minX = padding;
+  const maxX = canvas.width - width - padding;
+  const x = minX + Math.random() * (maxX - minX);
+
+  words.push({
+    text,
+    x,
+    y: 38
+  });
+}
 
 function update(deltaTime) {
   elapsedTime += deltaTime;
+  spawnTimer += deltaTime;
+
+  if (spawnTimer >= spawnDelay) {
+    spawnWord();
+    spawnTimer = 0;
+  }
 }
 
 function drawBackground() {
@@ -20,28 +78,40 @@ function drawBackground() {
   ctx.stroke();
 }
 
-function drawStatus() {
+function drawWords() {
   ctx.fillStyle = "#d8d1c4";
-  ctx.font = '18px "Courier New", monospace';
-  ctx.textAlign = "center";
-  ctx.fillText("WORD RAIN", canvas.width / 2, canvas.height / 2 - 14);
+  ctx.font = wordFont;
+  ctx.textAlign = "left";
+  ctx.textBaseline = "middle";
 
-  ctx.fillStyle = "#8f8b83";
-  ctx.font = '14px "Courier New", monospace';
-  ctx.fillText("The playfield is ready.", canvas.width / 2, canvas.height / 2 + 18);
+  for (const word of words) {
+    ctx.fillText(word.text, word.x, word.y);
+  }
+}
 
-  ctx.fillStyle = "#77756f";
+function drawStatus() {
+  ctx.fillStyle = "#88847c";
   ctx.font = '12px "Courier New", monospace';
   ctx.textAlign = "left";
+  ctx.textBaseline = "alphabetic";
+
+  ctx.fillText(
+    `WORDS ${words.length}`,
+    16,
+    canvas.height - 18
+  );
+
+  ctx.textAlign = "right";
   ctx.fillText(
     `RUNNING ${Math.floor(elapsedTime / 1000)}s`,
-    16,
+    canvas.width - 16,
     canvas.height - 18
   );
 }
 
 function render() {
   drawBackground();
+  drawWords();
   drawStatus();
 }
 
@@ -55,4 +125,5 @@ function gameLoop(timestamp) {
   requestAnimationFrame(gameLoop);
 }
 
+spawnWord();
 requestAnimationFrame(gameLoop);
