@@ -31,6 +31,7 @@ let elapsedTime = 0;
 let spawnTimer = 0;
 
 const spawnDelay = 1500;
+const fallSpeed = 42;
 const wordFont = '20px "Courier New", monospace';
 
 function getRandomWord() {
@@ -52,13 +53,29 @@ function spawnWord() {
   words.push({
     text,
     x,
-    y: 38
+    y: 30
   });
+}
+
+function updateWords(deltaTime) {
+  const seconds = deltaTime / 1000;
+
+  for (const word of words) {
+    word.y += fallSpeed * seconds;
+  }
+
+  for (let i = words.length - 1; i >= 0; i--) {
+    if (words[i].y > canvas.height + 30) {
+      words.splice(i, 1);
+    }
+  }
 }
 
 function update(deltaTime) {
   elapsedTime += deltaTime;
   spawnTimer += deltaTime;
+
+  updateWords(deltaTime);
 
   if (spawnTimer >= spawnDelay) {
     spawnWord();
@@ -92,14 +109,10 @@ function drawWords() {
 function drawStatus() {
   ctx.fillStyle = "#88847c";
   ctx.font = '12px "Courier New", monospace';
-  ctx.textAlign = "left";
   ctx.textBaseline = "alphabetic";
 
-  ctx.fillText(
-    `WORDS ${words.length}`,
-    16,
-    canvas.height - 18
-  );
+  ctx.textAlign = "left";
+  ctx.fillText(`WORDS ${words.length}`, 16, canvas.height - 18);
 
   ctx.textAlign = "right";
   ctx.fillText(
@@ -116,6 +129,10 @@ function render() {
 }
 
 function gameLoop(timestamp) {
+  if (lastTime === 0) {
+    lastTime = timestamp;
+  }
+
   const deltaTime = timestamp - lastTime;
   lastTime = timestamp;
 
