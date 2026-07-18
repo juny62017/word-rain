@@ -29,6 +29,8 @@ const words = [];
 let lastTime = 0;
 let elapsedTime = 0;
 let spawnTimer = 0;
+let activeWord = null;
+let typedIndex = 0;
 
 const spawnDelay = 1500;
 const fallSpeed = 42;
@@ -57,6 +59,57 @@ function spawnWord() {
   });
 }
 
+function findWord(letter) {
+  let match = null;
+
+  for (const word of words) {
+    if (word.text[0] !== letter) {
+      continue;
+    }
+
+    if (!match || word.y > match.y) {
+      match = word;
+    }
+  }
+
+  return match;
+}
+
+function clearLock() {
+  activeWord = null;
+  typedIndex = 0;
+}
+
+function handleKeydown(event) {
+  const key = event.key.toLowerCase();
+
+  if (key === "escape") {
+    clearLock();
+    return;
+  }
+
+  if (!/^[a-z]$/.test(key)) {
+    return;
+  }
+
+  if (!activeWord) {
+    const match = findWord(key);
+
+    if (match) {
+      activeWord = match;
+      typedIndex = 1;
+    }
+
+    return;
+  }
+
+  const expectedLetter = activeWord.text[typedIndex];
+
+  if (key === expectedLetter) {
+    typedIndex++;
+  }
+}
+
 function updateWords(deltaTime) {
   const seconds = deltaTime / 1000;
 
@@ -66,6 +119,10 @@ function updateWords(deltaTime) {
 
   for (let i = words.length - 1; i >= 0; i--) {
     if (words[i].y > canvas.height + 30) {
+      if (words[i] === activeWord) {
+        clearLock();
+      }
+
       words.splice(i, 1);
     }
   }
@@ -95,25 +152,78 @@ function drawBackground() {
   ctx.stroke();
 }
 
-function drawWords() {
+function drawNormalWord(word) {
   ctx.fillStyle = "#d8d1c4";
+  ctx.fillText(word.text, word.x, word.y);
+}
+
+function drawActiveWord(word) {
+  const matchedText = word.text.slice(0, typedIndex);
+  const remainingText = word.text.slice(typedIndex);
+
+  ctx.fillStyle = "#c9a66b";
+  ctx.fillText(matchedText, word.x, word.y);
+
+  const matchedWidth = ctx.measureText(matchedText).width;
+
+  ctx.fillStyle = "#d8d1c4";
+  ctx.fillText(
+    remainingText,
+    word.x + matchedWidth,
+    word.y
+  );
+
+  ctx.strokeStyle = "#8f7550";
+  ctx.lineWidth = 1;
+  ctx.strokeRect(
+    word.x - 6,
+    word.y - 16,
+    ctx.measureText(word.text).width + 12,
+    31
+  );
+}
+
+function drawWords() {
   ctx.font = wordFont;
   ctx.textAlign = "left";
   ctx.textBaseline = "middle";
 
   for (const word of words) {
-    ctx.fillText(word.text, word.x, word.y);
+    if (word === activeWord) {
+      drawActiveWord(word);
+    } else {
+      drawNormalWord(word);
+    }
   }
 }
 
 function drawStatus() {
-  ctx.fillStyle = "#88847c";
   ctx.font = '12px "Courier New", monospace';
   ctx.textBaseline = "alphabetic";
 
+  ctx.fillStyle = "#88847c";
   ctx.textAlign = "left";
   ctx.fillText(`WORDS ${words.length}`, 16, canvas.height - 18);
 
+  ctx.fillStyle = "#c9a66b";
+  ctx.textAlign = "center";
+
+  if (activeWord) {
+    const matchedText = activeWord.text.slice(0, typedIndex);
+    ctx.fillText(
+      `LOCKED: ${matchedText}`,
+      canvas.width / 2,
+      canvas.height - 18
+    );
+  } else {
+    ctx.fillText(
+      "TYPE A FIRST LETTER",
+      canvas.width / 2,
+      canvas.height - 18
+    );
+  }
+
+  ctx.fillStyle = "#88847c";
   ctx.textAlign = "right";
   ctx.fillText(
     `RUNNING ${Math.floor(elapsedTime / 1000)}s`,
@@ -141,6 +251,8 @@ function gameLoop(timestamp) {
 
   requestAnimationFrame(gameLoop);
 }
+
+window.addEventListener("keydown", handleKeydown);
 
 spawnWord();
 requestAnimationFrame(gameLoop);
