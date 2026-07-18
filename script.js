@@ -31,6 +31,7 @@ let elapsedTime = 0;
 let spawnTimer = 0;
 let activeWord = null;
 let typedIndex = 0;
+let destroyedWords = 0;
 
 const spawnDelay = 1500;
 const fallSpeed = 42;
@@ -80,6 +81,17 @@ function clearLock() {
   typedIndex = 0;
 }
 
+function destroyActiveWord() {
+  const index = words.indexOf(activeWord);
+
+  if (index !== -1) {
+    words.splice(index, 1);
+    destroyedWords++;
+  }
+
+  clearLock();
+}
+
 function handleKeydown(event) {
   const key = event.key.toLowerCase();
 
@@ -98,6 +110,10 @@ function handleKeydown(event) {
     if (match) {
       activeWord = match;
       typedIndex = 1;
+
+      if (typedIndex === activeWord.text.length) {
+        destroyActiveWord();
+      }
     }
 
     return;
@@ -107,6 +123,10 @@ function handleKeydown(event) {
 
   if (key === expectedLetter) {
     typedIndex++;
+
+    if (typedIndex === activeWord.text.length) {
+      destroyActiveWord();
+    }
   }
 }
 
@@ -203,13 +223,18 @@ function drawStatus() {
 
   ctx.fillStyle = "#88847c";
   ctx.textAlign = "left";
-  ctx.fillText(`WORDS ${words.length}`, 16, canvas.height - 18);
+  ctx.fillText(
+    `DESTROYED ${destroyedWords}`,
+    16,
+    canvas.height - 18
+  );
 
   ctx.fillStyle = "#c9a66b";
   ctx.textAlign = "center";
 
   if (activeWord) {
     const matchedText = activeWord.text.slice(0, typedIndex);
+
     ctx.fillText(
       `LOCKED: ${matchedText}`,
       canvas.width / 2,
@@ -226,7 +251,7 @@ function drawStatus() {
   ctx.fillStyle = "#88847c";
   ctx.textAlign = "right";
   ctx.fillText(
-    `RUNNING ${Math.floor(elapsedTime / 1000)}s`,
+    `WORDS ${words.length}`,
     canvas.width - 16,
     canvas.height - 18
   );
