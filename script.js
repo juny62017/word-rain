@@ -32,9 +32,12 @@ let spawnTimer = 0;
 let activeWord = null;
 let typedIndex = 0;
 let destroyedWords = 0;
+let lives = 3;
+let gameOver = false;
 
 const spawnDelay = 1500;
 const fallSpeed = 42;
+const groundY = canvas.height - 50;
 const wordFont = '20px "Courier New", monospace';
 
 function getRandomWord() {
@@ -92,7 +95,21 @@ function destroyActiveWord() {
   clearLock();
 }
 
+function loseLife() {
+  lives--;
+
+  if (lives <= 0) {
+    lives = 0;
+    gameOver = true;
+    clearLock();
+  }
+}
+
 function handleKeydown(event) {
+  if (gameOver) {
+    return;
+  }
+
   const key = event.key.toLowerCase();
 
   if (key === "escape") {
@@ -138,17 +155,27 @@ function updateWords(deltaTime) {
   }
 
   for (let i = words.length - 1; i >= 0; i--) {
-    if (words[i].y > canvas.height + 30) {
+    if (words[i].y >= groundY) {
       if (words[i] === activeWord) {
         clearLock();
       }
 
       words.splice(i, 1);
+      loseLife();
+
+      if (gameOver) {
+        words.length = 0;
+        break;
+      }
     }
   }
 }
 
 function update(deltaTime) {
+  if (gameOver) {
+    return;
+  }
+
   elapsedTime += deltaTime;
   spawnTimer += deltaTime;
 
@@ -167,8 +194,8 @@ function drawBackground() {
   ctx.strokeStyle = "#4b4b46";
   ctx.lineWidth = 1;
   ctx.beginPath();
-  ctx.moveTo(0, canvas.height - 50);
-  ctx.lineTo(canvas.width, canvas.height - 50);
+  ctx.moveTo(0, groundY);
+  ctx.lineTo(canvas.width, groundY);
   ctx.stroke();
 }
 
@@ -221,20 +248,15 @@ function drawStatus() {
   ctx.font = '12px "Courier New", monospace';
   ctx.textBaseline = "alphabetic";
 
-  ctx.fillStyle = "#88847c";
+  ctx.fillStyle = "#b46f62";
   ctx.textAlign = "left";
-  ctx.fillText(
-    `DESTROYED ${destroyedWords}`,
-    16,
-    canvas.height - 18
-  );
+  ctx.fillText(`LIVES ${lives}`, 16, canvas.height - 18);
 
   ctx.fillStyle = "#c9a66b";
   ctx.textAlign = "center";
 
   if (activeWord) {
     const matchedText = activeWord.text.slice(0, typedIndex);
-
     ctx.fillText(
       `LOCKED: ${matchedText}`,
       canvas.width / 2,
@@ -251,9 +273,50 @@ function drawStatus() {
   ctx.fillStyle = "#88847c";
   ctx.textAlign = "right";
   ctx.fillText(
-    `WORDS ${words.length}`,
+    `DESTROYED ${destroyedWords}`,
     canvas.width - 16,
     canvas.height - 18
+  );
+}
+
+function drawGameOver() {
+  if (!gameOver) {
+    return;
+  }
+
+  ctx.fillStyle = "#222526";
+  ctx.fillRect(
+    canvas.width / 2 - 170,
+    canvas.height / 2 - 55,
+    340,
+    110
+  );
+
+  ctx.strokeStyle = "#71675f";
+  ctx.lineWidth = 1;
+  ctx.strokeRect(
+    canvas.width / 2 - 170,
+    canvas.height / 2 - 55,
+    340,
+    110
+  );
+
+  ctx.fillStyle = "#b46f62";
+  ctx.font = '24px "Courier New", monospace';
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText(
+    "GAME OVER",
+    canvas.width / 2,
+    canvas.height / 2 - 14
+  );
+
+  ctx.fillStyle = "#a7a198";
+  ctx.font = '13px "Courier New", monospace';
+  ctx.fillText(
+    `Words destroyed: ${destroyedWords}`,
+    canvas.width / 2,
+    canvas.height / 2 + 22
   );
 }
 
@@ -261,6 +324,7 @@ function render() {
   drawBackground();
   drawWords();
   drawStatus();
+  drawGameOver();
 }
 
 function gameLoop(timestamp) {
@@ -268,7 +332,7 @@ function gameLoop(timestamp) {
     lastTime = timestamp;
   }
 
-  const deltaTime = timestamp - lastTime;
+  const deltaTime = Math.min(timestamp - lastTime, 100);
   lastTime = timestamp;
 
   update(deltaTime);
