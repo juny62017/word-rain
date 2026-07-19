@@ -33,10 +33,12 @@ let activeWord = null;
 let typedIndex = 0;
 let score = 0;
 let lives = 3;
+let level = 1;
 let gameOver = false;
 
-const spawnDelay = 1500;
-const fallSpeed = 42;
+let fallSpeed = 42;
+let spawnDelay = 1500;
+
 const pointsPerWord = 10;
 const groundY = canvas.height - 50;
 const wordFont = '20px "Courier New", monospace';
@@ -104,6 +106,15 @@ function loseLife() {
     gameOver = true;
     clearLock();
   }
+}
+
+function updateDifficulty() {
+  const timeLevel = Math.floor(elapsedTime / 30000);
+  const scoreLevel = Math.floor(score / 100);
+
+  level = 1 + timeLevel + scoreLevel;
+  fallSpeed = Math.min(42 + (level - 1) * 7, 140);
+  spawnDelay = Math.max(1500 - (level - 1) * 90, 500);
 }
 
 function handleKeydown(event) {
@@ -180,11 +191,12 @@ function update(deltaTime) {
   elapsedTime += deltaTime;
   spawnTimer += deltaTime;
 
+  updateDifficulty();
   updateWords(deltaTime);
 
-  if (spawnTimer >= spawnDelay) {
+  while (spawnTimer >= spawnDelay) {
     spawnWord();
-    spawnTimer = 0;
+    spawnTimer -= spawnDelay;
   }
 }
 
@@ -253,11 +265,15 @@ function drawStatus() {
   ctx.textAlign = "left";
   ctx.fillText(`LIVES ${lives}`, 16, canvas.height - 18);
 
+  ctx.fillStyle = "#88847c";
+  ctx.fillText(`LEVEL ${level}`, 110, canvas.height - 18);
+
   ctx.fillStyle = "#c9a66b";
   ctx.textAlign = "center";
 
   if (activeWord) {
     const matchedText = activeWord.text.slice(0, typedIndex);
+
     ctx.fillText(
       `LOCKED: ${matchedText}`,
       canvas.width / 2,
@@ -271,7 +287,7 @@ function drawStatus() {
     );
   }
 
-  ctx.fillStyle = "#88847c";
+  ctx.fillStyle = "#d8d1c4";
   ctx.textAlign = "right";
   ctx.fillText(
     `SCORE ${score}`,
