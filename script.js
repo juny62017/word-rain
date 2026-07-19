@@ -31,12 +31,13 @@ let elapsedTime = 0;
 let spawnTimer = 0;
 let activeWord = null;
 let typedIndex = 0;
-let destroyedWords = 0;
+let score = 0;
 let lives = 3;
 let gameOver = false;
 
 const spawnDelay = 1500;
 const fallSpeed = 42;
+const pointsPerWord = 10;
 const groundY = canvas.height - 50;
 const wordFont = '20px "Courier New", monospace';
 
@@ -89,7 +90,7 @@ function destroyActiveWord() {
 
   if (index !== -1) {
     words.splice(index, 1);
-    destroyedWords++;
+    score += pointsPerWord;
   }
 
   clearLock();
@@ -273,7 +274,7 @@ function drawStatus() {
   ctx.fillStyle = "#88847c";
   ctx.textAlign = "right";
   ctx.fillText(
-    `DESTROYED ${destroyedWords}`,
+    `SCORE ${score}`,
     canvas.width - 16,
     canvas.height - 18
   );
@@ -314,7 +315,7 @@ function drawGameOver() {
   ctx.fillStyle = "#a7a198";
   ctx.font = '13px "Courier New", monospace';
   ctx.fillText(
-    `Words destroyed: ${destroyedWords}`,
+    `Final score: ${score}`,
     canvas.width / 2,
     canvas.height / 2 + 22
   );
