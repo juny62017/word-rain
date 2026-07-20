@@ -53,7 +53,7 @@ let multiplierTimer = 0;
 const pointsPerWord = 10;
 const multiplierDuration = 7000;
 const groundY = canvas.height - 50;
-const wordFont = '20px "Courier New", monospace';
+const wordFont = 'bold 20px monospace';
 
 function getRandomWord() {
   const index = Math.floor(Math.random() * wordList.length);
@@ -277,10 +277,10 @@ function update(deltaTime) {
 }
 
 function drawBackground() {
-  ctx.fillStyle = "#222526";
+  ctx.fillStyle = "#000000";
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-  ctx.strokeStyle = "#343736";
+  ctx.strokeStyle = "#333333";
   ctx.lineWidth = 1;
 
   for (let y = 100; y < groundY; y += 100) {
@@ -290,7 +290,8 @@ function drawBackground() {
     ctx.stroke();
   }
 
-  ctx.strokeStyle = "#5e554e";
+  ctx.strokeStyle = "#FFFFFF";
+  ctx.lineWidth = 2;
   ctx.beginPath();
   ctx.moveTo(0, groundY);
   ctx.lineTo(canvas.width, groundY);
@@ -298,7 +299,7 @@ function drawBackground() {
 }
 
 function drawNormalWord(word) {
-  ctx.fillStyle = word.isMultiplier ? "#b89152" : "#d8d1c4";
+  ctx.fillStyle = word.isMultiplier ? "#FFFF00" : "#FFFFFF";
   ctx.fillText(word.text, word.x, word.y);
 }
 
@@ -308,18 +309,18 @@ function drawActiveWord(word) {
   const matchedWidth = ctx.measureText(matchedText).width;
   const wordWidth = ctx.measureText(word.text).width;
 
-  ctx.fillStyle = word.isMultiplier ? "#ddbc7a" : "#c9a66b";
+  ctx.fillStyle = "#FFFF00";
   ctx.fillText(matchedText, word.x, word.y);
 
-  ctx.fillStyle = word.isMultiplier ? "#b89152" : "#d8d1c4";
+  ctx.fillStyle = "#FFFFFF";
   ctx.fillText(
     remainingText,
     word.x + matchedWidth,
     word.y
   );
 
-  ctx.strokeStyle = word.isMultiplier ? "#9b7946" : "#8f7550";
-  ctx.lineWidth = 1;
+  ctx.strokeStyle = word.isMultiplier ? "#FFFF00" : "#FFFFFF";
+  ctx.lineWidth = 2;
   ctx.strokeRect(
     word.x - 6,
     word.y - 16,
@@ -343,28 +344,28 @@ function drawWords() {
 }
 
 function drawStatus() {
-  ctx.font = '12px "Courier New", monospace';
+  ctx.font = 'bold 14px monospace';
   ctx.textBaseline = "alphabetic";
 
-  ctx.fillStyle = "#b46f62";
+  ctx.fillStyle = "#FFFFFF";
   ctx.textAlign = "left";
   ctx.fillText(`LIVES ${lives}`, 16, canvas.height - 18);
 
-  ctx.fillStyle = "#88847c";
   ctx.fillText(`LEVEL ${level}`, 110, canvas.height - 18);
 
-  ctx.fillStyle = "#c9a66b";
   ctx.textAlign = "center";
 
   if (activeWord) {
     const matchedText = activeWord.text.slice(0, typedIndex);
 
+    ctx.fillStyle = "#FFFF00";
     ctx.fillText(
       `LOCKED: ${matchedText}`,
       canvas.width / 2,
       canvas.height - 18
     );
   } else {
+    ctx.fillStyle = "#FFFFFF";
     ctx.fillText(
       "TYPE A FIRST LETTER",
       canvas.width / 2,
@@ -377,7 +378,7 @@ function drawStatus() {
   if (scoreMultiplier > 1) {
     const secondsLeft = Math.ceil(multiplierTimer / 1000);
 
-    ctx.fillStyle = "#b89152";
+    ctx.fillStyle = "#FFFF00";
     ctx.fillText(
       `2X ${secondsLeft}s`,
       canvas.width - 112,
@@ -385,7 +386,7 @@ function drawStatus() {
     );
   }
 
-  ctx.fillStyle = "#d8d1c4";
+  ctx.fillStyle = "#FFFFFF";
   ctx.fillText(`SCORE ${score}`, canvas.width - 16, canvas.height - 18);
 }
 
@@ -393,11 +394,11 @@ function drawPanel(width, height) {
   const x = canvas.width / 2 - width / 2;
   const y = canvas.height / 2 - height / 2;
 
-  ctx.fillStyle = "#222526";
+  ctx.fillStyle = "#000000";
   ctx.fillRect(x, y, width, height);
 
-  ctx.strokeStyle = "#71675f";
-  ctx.lineWidth = 1;
+  ctx.strokeStyle = "#FFFFFF";
+  ctx.lineWidth = 2;
   ctx.strokeRect(x, y, width, height);
 }
 
@@ -407,35 +408,34 @@ function drawStartScreen() {
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
 
-  ctx.fillStyle = "#c9a66b";
-  ctx.font = '30px "Courier New", monospace';
+  ctx.fillStyle = "#FFFF00";
+  ctx.font = 'bold 32px monospace';
   ctx.fillText("WORD RAIN", canvas.width / 2, canvas.height / 2 - 78);
 
-  ctx.fillStyle = "#d8d1c4";
-  ctx.font = '14px "Courier New", monospace';
+  ctx.fillStyle = "#FFFFFF";
+  ctx.font = 'bold 16px monospace';
   ctx.fillText(
     "Type each word before it reaches the ground.",
     canvas.width / 2,
     canvas.height / 2 - 32
   );
 
-  ctx.fillStyle = "#aaa59b";
-  ctx.font = '12px "Courier New", monospace';
+  ctx.font = '14px monospace';
   ctx.fillText(
     "The first letter locks onto the lowest matching word.",
     canvas.width / 2,
     canvas.height / 2
   );
 
-  ctx.fillStyle = "#b89152";
+  ctx.fillStyle = "#FFFF00";
   ctx.fillText(
-    "Gold words trigger double points for seven seconds.",
+    "Yellow words trigger double points for seven seconds.",
     canvas.width / 2,
     canvas.height / 2 + 30
   );
 
-  ctx.fillStyle = "#c9a66b";
-  ctx.font = '13px "Courier New", monospace';
+  ctx.fillStyle = "#FFFFFF";
+  ctx.font = 'bold 16px monospace';
   ctx.fillText(
     "PRESS ENTER OR CLICK TO START",
     canvas.width / 2,
@@ -449,27 +449,24 @@ function drawGameOver() {
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
 
-  ctx.fillStyle = "#b46f62";
-  ctx.font = '26px "Courier New", monospace';
+  ctx.fillStyle = "#FFFFFF";
+  ctx.font = 'bold 32px monospace';
   ctx.fillText("GAME OVER", canvas.width / 2, canvas.height / 2 - 55);
 
-  ctx.fillStyle = "#d8d1c4";
-  ctx.font = '15px "Courier New", monospace';
+  ctx.font = 'bold 16px monospace';
   ctx.fillText(
     `FINAL SCORE ${score}`,
     canvas.width / 2,
     canvas.height / 2 - 10
   );
 
-  ctx.fillStyle = "#88847c";
-  ctx.font = '12px "Courier New", monospace';
   ctx.fillText(
     `LEVEL REACHED ${level}`,
     canvas.width / 2,
     canvas.height / 2 + 20
   );
 
-  ctx.fillStyle = "#c9a66b";
+  ctx.fillStyle = "#FFFF00";
   ctx.fillText(
     "PRESS ENTER OR CLICK TO PLAY AGAIN",
     canvas.width / 2,

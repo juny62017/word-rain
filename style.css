@@ -13,9 +13,9 @@ body {
   justify-content: center;
   align-items: center;
   padding: 24px;
-  background: #181a1b;
-  color: #d8d1c4;
-  font-family: "Courier New", Courier, monospace;
+  background: #000000;
+  color: #FFFFFF;
+  font-family: monospace;
 }
 
 .game-shell {
@@ -29,26 +29,29 @@ body {
   gap: 24px;
   margin-bottom: 14px;
   padding-bottom: 13px;
-  border-bottom: 1px solid #55534d;
+  border-bottom: 2px solid #FFFFFF;
 }
 
 .game-header h1 {
   margin: 0 0 6px;
-  color: #c9a66b;
-  font-size: 30px;
+  color: #FFFF00;
+  font-size: 32px;
   line-height: 1;
   letter-spacing: 4px;
+  text-transform: uppercase;
 }
 
 .game-header p {
   margin: 0;
-  color: #aaa59b;
-  font-size: 13px;
+  color: #FFFFFF;
+  font-size: 14px;
+  font-weight: bold;
 }
 
 .build-label {
-  color: #77756f;
-  font-size: 11px;
+  color: #FFFFFF;
+  font-size: 12px;
+  font-weight: bold;
   letter-spacing: 1px;
   white-space: nowrap;
 }
@@ -57,13 +60,13 @@ canvas {
   display: block;
   width: 100%;
   height: auto;
-  background: #222526;
-  border: 1px solid #666158;
+  background: #000000;
+  border: 2px solid #FFFFFF;
   outline: none;
 }
 
 canvas:focus {
-  border-color: #8f7550;
+  border-color: #FFFF00;
 }
 
 .game-footer {
@@ -71,8 +74,9 @@ canvas:focus {
   justify-content: space-between;
   gap: 20px;
   margin-top: 10px;
-  color: #77756f;
-  font-size: 11px;
+  color: #FFFFFF;
+  font-size: 12px;
+  font-weight: bold;
 }
 
 @media (max-width: 620px) {
