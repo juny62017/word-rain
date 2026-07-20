@@ -21,11 +21,22 @@ const wordList = [
   "stone",
   "table",
   "water",
-  "young"
+  "young",
+  "brush",
+  "field",
+  "green",
+  "heart",
+  "lemon",
+  "paper",
+  "radio",
+  "sleep",
+  "train",
+  "window"
 ];
 
 const words = [];
 
+let gameState = "start";
 let lastTime = 0;
 let elapsedTime = 0;
 let spawnTimer = 0;
@@ -34,8 +45,6 @@ let typedIndex = 0;
 let score = 0;
 let lives = 3;
 let level = 1;
-let gameOver = false;
-
 let fallSpeed = 42;
 let spawnDelay = 1500;
 
@@ -53,17 +62,33 @@ function spawnWord() {
 
   ctx.font = wordFont;
   const width = ctx.measureText(text).width;
-
   const padding = 20;
-  const minX = padding;
   const maxX = canvas.width - width - padding;
-  const x = minX + Math.random() * (maxX - minX);
+  const x = padding + Math.random() * (maxX - padding);
 
   words.push({
     text,
     x,
     y: 30
   });
+}
+
+function startGame() {
+  words.length = 0;
+
+  gameState = "playing";
+  elapsedTime = 0;
+  spawnTimer = 0;
+  activeWord = null;
+  typedIndex = 0;
+  score = 0;
+  lives = 3;
+  level = 1;
+  fallSpeed = 42;
+  spawnDelay = 1500;
+
+  spawnWord();
+  canvas.focus();
 }
 
 function findWord(letter) {
@@ -103,7 +128,8 @@ function loseLife() {
 
   if (lives <= 0) {
     lives = 0;
-    gameOver = true;
+    gameState = "gameover";
+    words.length = 0;
     clearLock();
   }
 }
@@ -117,45 +143,57 @@ function updateDifficulty() {
   spawnDelay = Math.max(1500 - (level - 1) * 90, 500);
 }
 
-function handleKeydown(event) {
-  if (gameOver) {
-    return;
-  }
-
-  const key = event.key.toLowerCase();
-
-  if (key === "escape") {
-    clearLock();
-    return;
-  }
-
-  if (!/^[a-z]$/.test(key)) {
-    return;
-  }
-
+function handleLetter(key) {
   if (!activeWord) {
     const match = findWord(key);
 
-    if (match) {
-      activeWord = match;
-      typedIndex = 1;
-
-      if (typedIndex === activeWord.text.length) {
-        destroyActiveWord();
-      }
+    if (!match) {
+      return;
     }
 
+    activeWord = match;
+    typedIndex = 1;
+  } else if (key === activeWord.text[typedIndex]) {
+    typedIndex++;
+  }
+
+  if (activeWord && typedIndex === activeWord.text.length) {
+    destroyActiveWord();
+  }
+}
+
+function handleKeydown(event) {
+  const key = event.key.toLowerCase();
+
+  if (key === "enter") {
+    if (gameState !== "playing") {
+      startGame();
+    }
+
+    event.preventDefault();
     return;
   }
 
-  const expectedLetter = activeWord.text[typedIndex];
+  if (gameState !== "playing") {
+    return;
+  }
 
-  if (key === expectedLetter) {
-    typedIndex++;
+  if (key === "escape") {
+    clearLock();
+    event.preventDefault();
+    return;
+  }
 
-    if (typedIndex === activeWord.text.length) {
-      destroyActiveWord();
-    }
+  if (/^[a-z]$/.test(key)) {
+    handleLetter(key);
+  }
+}
+
+function handleCanvasClick() {
+  canvas.focus();
+
+  if (gameState !== "playing") {
+    startGame();
   }
 }
 
@@ -167,24 +205,25 @@ function updateWords(deltaTime) {
   }
 
   for (let i = words.length - 1; i >= 0; i--) {
-    if (words[i].y >= groundY) {
-      if (words[i] === activeWord) {
-        clearLock();
-      }
+    if (words[i].y < groundY) {
+      continue;
+    }
 
-      words.splice(i, 1);
-      loseLife();
+    if (words[i] === activeWord) {
+      clearLock();
+    }
 
-      if (gameOver) {
-        words.length = 0;
-        break;
-      }
+    words.splice(i, 1);
+    loseLife();
+
+    if (gameState === "gameover") {
+      break;
     }
   }
 }
 
 function update(deltaTime) {
-  if (gameOver) {
+  if (gameState !== "playing") {
     return;
   }
 
@@ -194,7 +233,7 @@ function update(deltaTime) {
   updateDifficulty();
   updateWords(deltaTime);
 
-  while (spawnTimer >= spawnDelay) {
+  while (spawnTimer >= spawnDelay && gameState === "playing") {
     spawnWord();
     spawnTimer -= spawnDelay;
   }
@@ -204,8 +243,17 @@ function drawBackground() {
   ctx.fillStyle = "#222526";
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-  ctx.strokeStyle = "#4b4b46";
+  ctx.strokeStyle = "#343736";
   ctx.lineWidth = 1;
+
+  for (let y = 100; y < groundY; y += 100) {
+    ctx.beginPath();
+    ctx.moveTo(0, y);
+    ctx.lineTo(canvas.width, y);
+    ctx.stroke();
+  }
+
+  ctx.strokeStyle = "#5e554e";
   ctx.beginPath();
   ctx.moveTo(0, groundY);
   ctx.lineTo(canvas.width, groundY);
@@ -220,11 +268,11 @@ function drawNormalWord(word) {
 function drawActiveWord(word) {
   const matchedText = word.text.slice(0, typedIndex);
   const remainingText = word.text.slice(typedIndex);
+  const matchedWidth = ctx.measureText(matchedText).width;
+  const wordWidth = ctx.measureText(word.text).width;
 
   ctx.fillStyle = "#c9a66b";
   ctx.fillText(matchedText, word.x, word.y);
-
-  const matchedWidth = ctx.measureText(matchedText).width;
 
   ctx.fillStyle = "#d8d1c4";
   ctx.fillText(
@@ -238,7 +286,7 @@ function drawActiveWord(word) {
   ctx.strokeRect(
     word.x - 6,
     word.y - 16,
-    ctx.measureText(word.text).width + 12,
+    wordWidth + 12,
     31
   );
 }
@@ -289,58 +337,104 @@ function drawStatus() {
 
   ctx.fillStyle = "#d8d1c4";
   ctx.textAlign = "right";
+  ctx.fillText(`SCORE ${score}`, canvas.width - 16, canvas.height - 18);
+}
+
+function drawPanel(width, height) {
+  const x = canvas.width / 2 - width / 2;
+  const y = canvas.height / 2 - height / 2;
+
+  ctx.fillStyle = "#222526";
+  ctx.fillRect(x, y, width, height);
+
+  ctx.strokeStyle = "#71675f";
+  ctx.lineWidth = 1;
+  ctx.strokeRect(x, y, width, height);
+}
+
+function drawStartScreen() {
+  drawPanel(430, 220);
+
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+
+  ctx.fillStyle = "#c9a66b";
+  ctx.font = '30px "Courier New", monospace';
+  ctx.fillText("WORD RAIN", canvas.width / 2, canvas.height / 2 - 65);
+
+  ctx.fillStyle = "#d8d1c4";
+  ctx.font = '14px "Courier New", monospace';
   ctx.fillText(
-    `SCORE ${score}`,
-    canvas.width - 16,
-    canvas.height - 18
+    "Type each word before it reaches the ground.",
+    canvas.width / 2,
+    canvas.height / 2 - 20
+  );
+
+  ctx.fillStyle = "#aaa59b";
+  ctx.font = '12px "Courier New", monospace';
+  ctx.fillText(
+    "The first letter locks onto the lowest matching word.",
+    canvas.width / 2,
+    canvas.height / 2 + 12
+  );
+
+  ctx.fillStyle = "#c9a66b";
+  ctx.font = '13px "Courier New", monospace';
+  ctx.fillText(
+    "PRESS ENTER OR CLICK TO START",
+    canvas.width / 2,
+    canvas.height / 2 + 65
   );
 }
 
 function drawGameOver() {
-  if (!gameOver) {
-    return;
-  }
+  drawPanel(380, 190);
 
-  ctx.fillStyle = "#222526";
-  ctx.fillRect(
-    canvas.width / 2 - 170,
-    canvas.height / 2 - 55,
-    340,
-    110
-  );
-
-  ctx.strokeStyle = "#71675f";
-  ctx.lineWidth = 1;
-  ctx.strokeRect(
-    canvas.width / 2 - 170,
-    canvas.height / 2 - 55,
-    340,
-    110
-  );
-
-  ctx.fillStyle = "#b46f62";
-  ctx.font = '24px "Courier New", monospace';
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
+
+  ctx.fillStyle = "#b46f62";
+  ctx.font = '26px "Courier New", monospace';
+  ctx.fillText("GAME OVER", canvas.width / 2, canvas.height / 2 - 55);
+
+  ctx.fillStyle = "#d8d1c4";
+  ctx.font = '15px "Courier New", monospace';
   ctx.fillText(
-    "GAME OVER",
+    `FINAL SCORE ${score}`,
     canvas.width / 2,
-    canvas.height / 2 - 14
+    canvas.height / 2 - 10
   );
 
-  ctx.fillStyle = "#a7a198";
-  ctx.font = '13px "Courier New", monospace';
+  ctx.fillStyle = "#88847c";
+  ctx.font = '12px "Courier New", monospace';
   ctx.fillText(
-    `Final score: ${score}`,
+    `LEVEL REACHED ${level}`,
     canvas.width / 2,
-    canvas.height / 2 + 22
+    canvas.height / 2 + 20
+  );
+
+  ctx.fillStyle = "#c9a66b";
+  ctx.fillText(
+    "PRESS ENTER OR CLICK TO PLAY AGAIN",
+    canvas.width / 2,
+    canvas.height / 2 + 60
   );
 }
 
 function render() {
   drawBackground();
-  drawWords();
-  drawStatus();
+
+  if (gameState === "start") {
+    drawStartScreen();
+    return;
+  }
+
+  if (gameState === "playing") {
+    drawWords();
+    drawStatus();
+    return;
+  }
+
   drawGameOver();
 }
 
@@ -359,6 +453,8 @@ function gameLoop(timestamp) {
 }
 
 window.addEventListener("keydown", handleKeydown);
+canvas.addEventListener("click", handleCanvasClick);
 
-spawnWord();
+canvas.setAttribute("tabindex", "0");
+
 requestAnimationFrame(gameLoop);

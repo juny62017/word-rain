@@ -23,7 +23,12 @@ body {
 }
 
 .game-header {
-  margin-bottom: 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 24px;
+  margin-bottom: 14px;
+  padding-bottom: 13px;
   border-bottom: 1px solid #55534d;
 }
 
@@ -31,13 +36,21 @@ body {
   margin: 0 0 6px;
   color: #c9a66b;
   font-size: 30px;
+  line-height: 1;
   letter-spacing: 4px;
 }
 
 .game-header p {
-  margin: 0 0 14px;
+  margin: 0;
   color: #aaa59b;
-  font-size: 14px;
+  font-size: 13px;
+}
+
+.build-label {
+  color: #77756f;
+  font-size: 11px;
+  letter-spacing: 1px;
+  white-space: nowrap;
 }
 
 canvas {
@@ -46,11 +59,43 @@ canvas {
   height: auto;
   background: #222526;
   border: 1px solid #666158;
+  outline: none;
 }
 
-.status-text {
-  margin: 10px 0 0;
-  color: #88847c;
-  font-size: 12px;
-  text-align: right;
+canvas:focus {
+  border-color: #8f7550;
+}
+
+.game-footer {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  margin-top: 10px;
+  color: #77756f;
+  font-size: 11px;
+}
+
+@media (max-width: 620px) {
+  body {
+    align-items: flex-start;
+    padding: 16px;
+  }
+
+  .game-header {
+    display: block;
+  }
+
+  .build-label {
+    display: block;
+    margin-top: 10px;
+  }
+
+  .game-footer {
+    display: block;
+    line-height: 1.8;
+  }
+
+  .game-footer span {
+    display: block;
+  }
 }

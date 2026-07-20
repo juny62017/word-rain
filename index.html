@@ -9,15 +9,22 @@
 <body>
   <main class="game-shell">
     <header class="game-header">
-      <h1>WORD RAIN</h1>
-      <p>Type the falling words before they reach the ground.</p>
+      <div>
+        <h1>WORD RAIN</h1>
+        <p>Type the falling words before they reach the ground.</p>
+      </div>
+
+      <span class="build-label">ENDLESS TYPING GAME</span>
     </header>
 
     <canvas id="gameCanvas" width="900" height="560">
       Your browser does not support the canvas element.
     </canvas>
 
-    <p class="status-text">Game loop running</p>
+    <footer class="game-footer">
+      <span>ENTER: START / RESTART</span>
+      <span>ESC: RELEASE WORD</span>
+    </footer>
   </main>
 
   <script src="script.js"></script>
