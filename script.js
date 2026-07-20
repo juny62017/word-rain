@@ -47,8 +47,11 @@ let lives = 3;
 let level = 1;
 let fallSpeed = 42;
 let spawnDelay = 1500;
+let scoreMultiplier = 1;
+let multiplierTimer = 0;
 
 const pointsPerWord = 10;
+const multiplierDuration = 7000;
 const groundY = canvas.height - 50;
 const wordFont = '20px "Courier New", monospace';
 
@@ -57,8 +60,13 @@ function getRandomWord() {
   return wordList[index];
 }
 
+function getMultiplierChance() {
+  return Math.min(0.08 + score / 1500, 0.28);
+}
+
 function spawnWord() {
   const text = getRandomWord();
+  const isMultiplier = Math.random() < getMultiplierChance();
 
   ctx.font = wordFont;
   const width = ctx.measureText(text).width;
@@ -69,7 +77,9 @@ function spawnWord() {
   words.push({
     text,
     x,
-    y: 30
+    y: 30,
+    isMultiplier,
+    speedFactor: isMultiplier ? 1.18 : 1
   });
 }
 
@@ -86,6 +96,8 @@ function startGame() {
   level = 1;
   fallSpeed = 42;
   spawnDelay = 1500;
+  scoreMultiplier = 1;
+  multiplierTimer = 0;
 
   spawnWord();
   canvas.focus();
@@ -112,12 +124,23 @@ function clearLock() {
   typedIndex = 0;
 }
 
+function activateMultiplier() {
+  scoreMultiplier = 2;
+  multiplierTimer = multiplierDuration;
+}
+
 function destroyActiveWord() {
   const index = words.indexOf(activeWord);
 
   if (index !== -1) {
+    const destroyedWord = words[index];
+
+    score += pointsPerWord * scoreMultiplier;
     words.splice(index, 1);
-    score += pointsPerWord;
+
+    if (destroyedWord.isMultiplier) {
+      activateMultiplier();
+    }
   }
 
   clearLock();
@@ -141,6 +164,19 @@ function updateDifficulty() {
   level = 1 + timeLevel + scoreLevel;
   fallSpeed = Math.min(42 + (level - 1) * 7, 140);
   spawnDelay = Math.max(1500 - (level - 1) * 90, 500);
+}
+
+function updateMultiplier(deltaTime) {
+  if (multiplierTimer <= 0) {
+    return;
+  }
+
+  multiplierTimer -= deltaTime;
+
+  if (multiplierTimer <= 0) {
+    multiplierTimer = 0;
+    scoreMultiplier = 1;
+  }
 }
 
 function handleLetter(key) {
@@ -201,7 +237,7 @@ function updateWords(deltaTime) {
   const seconds = deltaTime / 1000;
 
   for (const word of words) {
-    word.y += fallSpeed * seconds;
+    word.y += fallSpeed * word.speedFactor * seconds;
   }
 
   for (let i = words.length - 1; i >= 0; i--) {
@@ -231,6 +267,7 @@ function update(deltaTime) {
   spawnTimer += deltaTime;
 
   updateDifficulty();
+  updateMultiplier(deltaTime);
   updateWords(deltaTime);
 
   while (spawnTimer >= spawnDelay && gameState === "playing") {
@@ -261,7 +298,7 @@ function drawBackground() {
 }
 
 function drawNormalWord(word) {
-  ctx.fillStyle = "#d8d1c4";
+  ctx.fillStyle = word.isMultiplier ? "#b89152" : "#d8d1c4";
   ctx.fillText(word.text, word.x, word.y);
 }
 
@@ -271,17 +308,17 @@ function drawActiveWord(word) {
   const matchedWidth = ctx.measureText(matchedText).width;
   const wordWidth = ctx.measureText(word.text).width;
 
-  ctx.fillStyle = "#c9a66b";
+  ctx.fillStyle = word.isMultiplier ? "#ddbc7a" : "#c9a66b";
   ctx.fillText(matchedText, word.x, word.y);
 
-  ctx.fillStyle = "#d8d1c4";
+  ctx.fillStyle = word.isMultiplier ? "#b89152" : "#d8d1c4";
   ctx.fillText(
     remainingText,
     word.x + matchedWidth,
     word.y
   );
 
-  ctx.strokeStyle = "#8f7550";
+  ctx.strokeStyle = word.isMultiplier ? "#9b7946" : "#8f7550";
   ctx.lineWidth = 1;
   ctx.strokeRect(
     word.x - 6,
@@ -335,8 +372,20 @@ function drawStatus() {
     );
   }
 
-  ctx.fillStyle = "#d8d1c4";
   ctx.textAlign = "right";
+
+  if (scoreMultiplier > 1) {
+    const secondsLeft = Math.ceil(multiplierTimer / 1000);
+
+    ctx.fillStyle = "#b89152";
+    ctx.fillText(
+      `2X ${secondsLeft}s`,
+      canvas.width - 112,
+      canvas.height - 18
+    );
+  }
+
+  ctx.fillStyle = "#d8d1c4";
   ctx.fillText(`SCORE ${score}`, canvas.width - 16, canvas.height - 18);
 }
 
@@ -353,21 +402,21 @@ function drawPanel(width, height) {
 }
 
 function drawStartScreen() {
-  drawPanel(430, 220);
+  drawPanel(430, 240);
 
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
 
   ctx.fillStyle = "#c9a66b";
   ctx.font = '30px "Courier New", monospace';
-  ctx.fillText("WORD RAIN", canvas.width / 2, canvas.height / 2 - 65);
+  ctx.fillText("WORD RAIN", canvas.width / 2, canvas.height / 2 - 78);
 
   ctx.fillStyle = "#d8d1c4";
   ctx.font = '14px "Courier New", monospace';
   ctx.fillText(
     "Type each word before it reaches the ground.",
     canvas.width / 2,
-    canvas.height / 2 - 20
+    canvas.height / 2 - 32
   );
 
   ctx.fillStyle = "#aaa59b";
@@ -375,7 +424,14 @@ function drawStartScreen() {
   ctx.fillText(
     "The first letter locks onto the lowest matching word.",
     canvas.width / 2,
-    canvas.height / 2 + 12
+    canvas.height / 2
+  );
+
+  ctx.fillStyle = "#b89152";
+  ctx.fillText(
+    "Gold words trigger double points for seven seconds.",
+    canvas.width / 2,
+    canvas.height / 2 + 30
   );
 
   ctx.fillStyle = "#c9a66b";
@@ -383,7 +439,7 @@ function drawStartScreen() {
   ctx.fillText(
     "PRESS ENTER OR CLICK TO START",
     canvas.width / 2,
-    canvas.height / 2 + 65
+    canvas.height / 2 + 82
   );
 }
 
