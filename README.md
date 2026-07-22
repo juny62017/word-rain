@@ -13,6 +13,9 @@ The game ends when all lives are gone.
 IT IS A ENDLESS GAME
 AS THERE IS NO END HERE 
 
+This project fits the Endless theme because words keep spawning continuously with no final level or winning point.
+The game randomly selects words from the word list, while an algorithm gradually increases their falling speed and decreases the spawning delay based on the player's score and survival time.
+
 ## Features
 
 - random words falling
