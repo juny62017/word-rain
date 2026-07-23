@@ -22,8 +22,8 @@ and decreases the spawning delay according on the player’s score and survival 
 
 - random words falling
 - Once you type the first letter of word.. it lockes it
-- Lives and game over system
-- Score tracking
+- Lives and game over 
+- Score tracking according to your game play
 - Endless difficulty 
 - Faster fall speed over time
 - Faster word spawning as the score increases
